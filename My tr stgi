@@ -1,0 +1,43 @@
+//@version=5
+strategy("Stratégie S/R et Tendance", overlay=true)
+
+// Définition des timeframes
+tf_w1 = request.security(syminfo.tickerid, "W", close)
+tf_d1 = request.security(syminfo.tickerid, "D", close)
+
+// Moyenne mobile 100
+ma100 = ta.sma(close, 100)
+
+// Détection des supports et résistances (méthode basique)
+resistance_w1 = ta.highest(high, 7)
+support_w1 = ta.lowest(low, 7)
+resistance_d1 = ta.highest(high, 5)
+support_d1 = ta.lowest(low, 5)
+
+// Détection cassure et tendance
+breakout = ta.crossover(close, resistance_d1)  // Cassure haussière
+breakdown = ta.crossunder(close, support_d1)   // Cassure baissière
+
+// Détection figure de retournement (ex : marteau)
+hammer = close > open and ta.lowest(low, 5) == low
+
+// Conditions d'achat
+long_condition = breakout and close > ma100 and hammer
+
+// Conditions de vente
+short_condition = breakdown and close < ma100
+
+// Entrée en position
+if (long_condition)
+    strategy.entry("Long", strategy.long)
+
+// Stop-loss et take-profit
+sl = support_d1
+tp = close + (close - sl) * 2.5  // RR = 2.5
+
+strategy.exit("Take Profit", from_entry="Long", limit=tp, stop=sl)
+
+// Affichage des lignes de S/R
+plot(resistance_w1, "Résistance W1", color=color.red)
+plot(support_w1, "Support W1", color=color.green)
+plot(ma100, "MA 100", color=color.blue)
